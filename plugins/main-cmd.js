@@ -972,7 +972,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 
         const vv = await conn.sendMessage(from, {
             image: { url:bot.ALIVE_IMG},
-            caption: `> KIRA-MD Settings\n
+            caption: `> SURYA-X Settings\n
 ┏━━━━━━━━━━━━━━━━━━┓
 ┃╭┈────────━━━━───╮
 ┣┣Work Mode : *${work}*
