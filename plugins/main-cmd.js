@@ -34,7 +34,7 @@ try{
 │ *Hello , I am SURYA-X*
 ╰──────────●●►
 
-${bot.SURYA-X}`
+${bot.SURYA_X}`
 
 await conn.sendMessage(from, { 
     image:{ url:bot.ALIVE_IMG },
