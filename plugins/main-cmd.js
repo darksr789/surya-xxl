@@ -239,7 +239,7 @@ menu[commands[i].category] += `*│*❯❯◦ ${commands[i].pattern}\n`;
  }
 }
 
-let madeMenu = `🤩 *HELLO* *${pushname}*
+let madeMenu = `🤩 *HELLOW* *${pushname}*
 > WELLCOME TO SURYA-X 🪀
 
 ╭─「 ꜱᴛᴀᴛᴜꜱ ᴅᴇᴛᴀɪʟꜱ 」
@@ -314,7 +314,7 @@ cmd({
 async (conn, mek, m, { from, pushname, reply, contextInfo }) => {
     try {
         let desc = `
-🤩 *HELLO* *${pushname}*
+🤩 *HELLOW* *${pushname}*
 > WELLCOME TO SURYA-X 🪀
 
 ╭─「 ꜱᴛᴀᴛᴜꜱ ᴅᴇᴛᴀɪʟꜱ 」
@@ -350,24 +350,15 @@ ${bot.COPYRIGHT}`;
             contextInfo
         }, { quoted: mek });
 
-        // Listen for the reply - using once to avoid duplicate listeners
-        const menuHandler = async (msgUpdate) => {
+        // Listen for the reply
+        conn.ev.on('messages.upsert', async (msgUpdate) => {
             const msg = msgUpdate.messages[0];
-            if (!msg.message) return;
+            if (!msg.message || !msg.message.extendedTextMessage) return;
+            
+            const selectedOption = msg.message.extendedTextMessage.text.trim();
 
-            // Handle both reply and plain message
-            const isExtended = msg.message.extendedTextMessage;
-            const isConversation = msg.message.conversation;
-            const selectedOption = (isExtended?.text || isConversation || '').trim();
-            const stanzaId = isExtended?.contextInfo?.stanzaId;
-
-            // Match by stanzaId (reply) OR by sender and recent time
-            const isReply = stanzaId === menuMessage.key.id;
-            const isSameSender = msg.key.remoteJid === menuMessage.key.remoteJid;
-            const isRecent = Date.now() - (msg.messageTimestamp * 1000) < 300000;
-
-            if ((isReply || isSameSender) && isRecent && selectedOption) {
-                conn.ev.off('messages.upsert', menuHandler);
+            // Check if the reply is in response to the menu message
+            if (msg.message.extendedTextMessage.contextInfo?.stanzaId === menuMessage.key.id) {
 
                 switch (selectedOption) {
                     case '1':
@@ -633,10 +624,7 @@ ${bot.COPYRIGHT}`;
                     default:
                 }
             }
-        };
-        conn.ev.on('messages.upsert', menuHandler);
-        // Remove listener after 5 minutes
-        setTimeout(() => conn.ev.off('messages.upsert', menuHandler), 300000);
+        });
 
     } catch (e) {
         console.error(e);
@@ -1211,3 +1199,4 @@ cmd({
           reply("An error occurred while processing the message.");
       }
   });
+  
