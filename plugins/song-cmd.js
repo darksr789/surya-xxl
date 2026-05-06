@@ -1,8 +1,13 @@
 const { cmd } = require('../lib/command');
-const axios = require('axios');
 const bot = require('../lib/bot');
 const yts = require('yt-search');
+const ytdl = require('@distube/ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const fs = require('fs');
+const path = require('path');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 cmd({
     pattern: "song",
@@ -19,7 +24,7 @@ async (conn, mek, m, { from, q, reply }) => {
         await conn.sendMessage(from, { react: { text: '🔍', key: mek.key } });
         reply("🔍 *Searching song...*");
 
-        // ── Step 1: Search using yt-search ───────────────────
+        // ── Step 1: Search ────────────────────────────────────
         const search = await yts(q);
         const video = search.videos[0];
         if (!video) return reply("❌ Song not found! Please try with a different name.");
@@ -32,67 +37,28 @@ async (conn, mek, m, { from, q, reply }) => {
 
         reply("🎵 *Found! Downloading...*");
 
-        // ── Step 2: Download MP3 ──────────────────────────────
-        let audioUrl = null;
+        // ── Step 2: Download with ytdl-core ──────────────────
+        const outputPath = path.join('/tmp', `${videoId}.mp3`);
+        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
 
-        // API 1 — siputzx
-        try {
-            const res = await axios.get(
-                `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`,
-                { timeout: 20000 }
-            );
-            audioUrl = res.data?.data?.dl_url || res.data?.download || res.data?.url;
-        } catch {}
+        await new Promise((resolve, reject) => {
+            const stream = ytdl(youtubeUrl, {
+                quality: 'highestaudio',
+                filter: 'audioonly'
+            });
 
-        // API 2 — agatz
-        if (!audioUrl) {
-            try {
-                const res = await axios.get(
-                    `https://api.agatz.xyz/api/ytmp3?url=${encodeURIComponent(youtubeUrl)}`,
-                    { timeout: 20000 }
-                );
-                audioUrl = res.data?.data?.url || res.data?.url;
-            } catch {}
-        }
+            ffmpeg(stream)
+                .audioBitrate(128)
+                .toFormat('mp3')
+                .on('end', resolve)
+                .on('error', reject)
+                .save(outputPath);
+        });
 
-        // API 3 — dreaded
-        if (!audioUrl) {
-            try {
-                const res = await axios.get(
-                    `https://api.dreaded.site/api/ytmp3?url=${encodeURIComponent(youtubeUrl)}`,
-                    { timeout: 20000 }
-                );
-                audioUrl = res.data?.result?.audio || res.data?.result?.url || res.data?.result?.link;
-            } catch {}
-        }
+        if (!fs.existsSync(outputPath)) return reply("❌ Download failed! Please try again.");
 
-        // API 4 — cobalt
-        if (!audioUrl) {
-            try {
-                const res = await axios.post(
-                    'https://api.cobalt.tools/api/json',
-                    { url: youtubeUrl, aFormat: 'mp3', isAudioOnly: true },
-                    {
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        timeout: 20000
-                    }
-                );
-                audioUrl = res.data?.url;
-            } catch {}
-        }
-
-        // API 5 — y2mate style
-        if (!audioUrl) {
-            try {
-                const res = await axios.get(
-                    `https://api.lolhuman.xyz/api/ytmp3?apikey=lolhuman&id=${videoId}`,
-                    { timeout: 20000 }
-                );
-                audioUrl = res.data?.result?.url;
-            } catch {}
-        }
-
-        if (!audioUrl) return reply("❌ Failed to download! Please try again later.");
+        const audioBuffer = fs.readFileSync(outputPath);
+        fs.unlinkSync(outputPath);
 
         await conn.sendMessage(from, { react: { text: '🎵', key: mek.key } });
 
@@ -103,7 +69,7 @@ async (conn, mek, m, { from, q, reply }) => {
         }, { quoted: mek });
 
         await conn.sendMessage(from, {
-            audio: { url: audioUrl },
+            audio: audioBuffer,
             mimetype: 'audio/mpeg',
             fileName: `${title}.mp3`,
             ptt: false
