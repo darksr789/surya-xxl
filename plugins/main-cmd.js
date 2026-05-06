@@ -34,7 +34,7 @@ try{
 │ *Hello , I am SURYA-X*
 ╰──────────●●►
 
-${bot.COPYRIGHT}`
+${bot.SURYA_X}`
 
 await conn.sendMessage(from, { 
     image:{ url:bot.ALIVE_IMG },
@@ -972,7 +972,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 
         const vv = await conn.sendMessage(from, {
             image: { url:bot.ALIVE_IMG},
-            caption: `> KIRA-MD Settings\n
+            caption: `> SURYA-X Settings\n
 ┏━━━━━━━━━━━━━━━━━━┓
 ┃╭┈────────━━━━───╮
 ┣┣Work Mode : *${work}*
@@ -1199,4 +1199,31 @@ cmd({
           reply("An error occurred while processing the message.");
       }
   });
-  
+
+cmd({
+    on: "body"
+}, async (conn, mek, m, { from, body, reply }) => {
+    const input = body.trim();
+
+    // Jodi keu '1' likhe reply dey
+    if (input === '1') {
+        let msg = `*📥 DOWNLOAD COMMANDS*
+
+│ ◈ .song [gaan-er naam] - YouTube MP3 🎶
+│ ◈ .ytv [link] - YouTube Video 🎥
+
+> Gaan download korte .song likhe gaaner naam likhun (Ex: .song Believer)`;
+        return reply(msg);
+    }
+
+    // Jodi keu '4' likhe reply dey
+    if (input === '4') {
+        let msg = `*👑 OWNER COMMANDS*
+
+│ ◈ .restart - Bot Restart
+│ ◈ .setpp - Change Profile Picture
+│ ◈ .block @user - Block User`;
+        return reply(msg);
+    }
+});
+
