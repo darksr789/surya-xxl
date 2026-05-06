@@ -1200,3 +1200,56 @@ cmd({
       }
   });
   
+//========================================= Song Download =========================================
+cmd({
+    pattern: "song",
+    alias: ["play", "music"],
+    desc: "Download songs from YouTube",
+    category: "download",
+    react: "🎵",
+    filename: __filename
+},
+async (conn, mek, m, { from, text, reply }) => {
+    try {
+        if (!text) return reply("*Usage:* .song [song name]\n*Example:* .song tum hi ho");
+
+        await reply("_Searching for your song..._");
+
+        // YouTube search and download API call
+        const searchUrl = `https://api.giftedtech.my.id/api/download/dlmp3?url=${encodeURIComponent(text)}`;
+        const res = await axios.get(searchUrl);
+
+        if (res.data && res.data.success) {
+            const videoData = res.data.result;
+            
+            // Sending song details with thumbnail
+            await conn.sendMessage(from, {
+                image: { url: videoData.thumb },
+                caption: `*🎵 SURYA-X MUSIC DOWNLOADER*\n\n📌 *Title:* ${videoData.title}\n🔗 *Link:* ${text}\n\n_Uploading audio, please wait..._`
+            }, { quoted: mek });
+
+            // Sending the actual audio file
+            await conn.sendMessage(from, {
+                audio: { url: videoData.download_url },
+                mimetype: 'audio/mpeg',
+                fileName: `${videoData.title}.mp3`
+            }, { quoted: mek });
+        } else {
+            // If the first API fails, trying a backup
+            const backupUrl = `https://api.dreaded.site/api/ytdl/video?url=${encodeURIComponent(text)}`;
+            const backupRes = await axios.get(backupUrl);
+            
+            if (backupRes.data && backupRes.data.result) {
+                await conn.sendMessage(from, {
+                    audio: { url: backupRes.data.result.downloadLink },
+                    mimetype: 'audio/mpeg'
+                }, { quoted: mek });
+            } else {
+                reply("❌ Failed to download! Please try another song name.");
+            }
+        }
+    } catch (e) {
+        console.log(e);
+        reply("❌ Error occurred: " + e.message);
+    }
+});
