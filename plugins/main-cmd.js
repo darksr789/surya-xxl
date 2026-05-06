@@ -1200,7 +1200,7 @@ cmd({
       }
   });
   
-//========================================= Song Download Command =========================================
+//========================================= Working Song Command =========================================
 cmd({
     pattern: "song",
     alias: ["play", "music"],
@@ -1215,28 +1215,30 @@ async (conn, mek, m, { from, q, reply }) => {
 
         await reply("_Searching for your song: " + q + "_");
 
-        // Download API call
-        const searchUrl = `https://api.giftedtech.my.id/api/download/dlmp3?url=${encodeURIComponent(q)}`;
+        // Backup API bebohar kora hochhe karon ager-ti offline
+        const searchUrl = `https://api.dreaded.site/api/ytdl/video?url=${encodeURIComponent(q)}`;
         const res = await axios.get(searchUrl);
 
-        if (res.data && res.data.success) {
+        if (res.data && res.data.result) {
             const videoData = res.data.result;
             
+            // Thumbnail pathano hochhe
             await conn.sendMessage(from, {
-                image: { url: videoData.thumb },
+                image: { url: videoData.thumbnail },
                 caption: `*🎵 SURYA-X MUSIC*\n\n📌 *Title:* ${videoData.title}\n\n_Uploading audio, please wait..._`
             }, { quoted: mek });
 
+            // Audio file pathano hochhe
             await conn.sendMessage(from, {
-                audio: { url: videoData.download_url },
+                audio: { url: videoData.downloadLink },
                 mimetype: 'audio/mpeg',
                 fileName: `${videoData.title}.mp3`
             }, { quoted: mek });
         } else {
-            reply("❌ Failed to download! Please try another name.");
+            reply("❌ Failed to download! Please try another song name.");
         }
     } catch (e) {
         console.log(e);
-        reply("❌ Error: " + e.message);
+        reply("❌ API Error! Onno kono gaaner naam diye chesta korun.");
     }
 });
